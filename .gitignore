@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Environment
+.env
+.venv/
+
+# UV
+.python-version
+
+# Chroma (banco de dados local)
+chroma_db/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Modelos e dados
+*.joblib
+data/
+
+# IDEs
+.vscode/
+.idea/
+
+agent-chat-ui/

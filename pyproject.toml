@@ -1,0 +1,13 @@
+[project]
+name = "deep-research-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain>=1.2.10",
+    "langchain-chroma>=1.1.0",
+    "langsmith>=0.7.6",
+    "python-dotenv>=1.2.1",
+    "tavily>=1.1.0",
+]
