@@ -1,4 +1,9 @@
-"""Initializes the graph's state to maintain thread context consistency."""
+"""Initializes the graph's state to maintain thread context consistency.
+
+This is basically the communication protocol of the graph's nodes, with it,
+it is possible to maintain persistency across the graph's steps. Meaning every 
+node knows what the previous did, which defines the next steps.
+"""
 
 from typing import Literal, Annotated
 from langgraph.graph import MessagesState
@@ -37,9 +42,12 @@ class ResearchState(MessagesState):
     """
     intent: Literal["research", "conversation"] 
     research_mode: Literal["new", "existing"] 
-    query: str 
-    retrieved_docs: Annotated[list[str], add_docs] # reducer for accumulated docs, instead of overwriting, uses add_docs
+    query: str
+
+    # Reducers: instead of overwriting, uses add_docs (e.g. append instead of replace)
+    retrieved_docs: Annotated[list[str], add_docs] # reducer for accumulated docs
     search_results: Annotated[list[str], add_docs] # reducer for accumulated search results
+
     cache_hit: bool 
     final_report: str 
     save_to_chroma: bool 
