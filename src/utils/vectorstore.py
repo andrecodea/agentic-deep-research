@@ -1,8 +1,6 @@
 """Initializes and exposes the Chroma vector store for the research agent.
 
-Here I used a singleton pattern to ensure 
-that the vector store is initialized only once.
-
+Here I used a singleton pattern to ensure that the vector store is initialized only once.
 """
 
 import logging

@@ -1,6 +1,12 @@
 # Deep Research Multi-Agent System with RAG via HITL
 
-> Multi-agent research pipeline with semantic memory, HITL curation, and LangGraph orchestration.
+> Enterprise-grade multi-agent research pipeline orchestrated with LangGraph, designed to accelerate technical decision-making by automating web research, knowledge curation, and report generation. Features semantic memory via Chroma with Human-in-the-Loop curation, session persistence via PostgreSQL, and full observability via LangSmith.
+>
+> The system classifies user intent, routes between new research and existing knowledge, searches and extracts relevant content from the web, generates comprehensive Markdown summaries, and stores curated context in a vector store pending HITL approval. Inference powered by Mercury 2 (Inception Labs) — a state-of-the-art diffusion LLM capable of 1,009 tokens/second with 1.7s end-to-end latency.
+
+![CI](https://github.com/andrecodea/agentic-deep-research/actions/workflows/ci.yml/badge.svg)
+
+---
 
 ## Architecture
 
@@ -17,13 +23,13 @@ Router — "new research or existing knowledge?"
   ├── EXISTING → Retriever (Chroma query) → Writer → END
   └── NEW ↓
 
-Retriever (checks Chroma cache)
+Retriever (checks Chroma semantic cache)
   ├── HIT  → Writer
   └── MISS ↓
 
 Researcher (Tavily search + extract)
   ↓
-Writer (Markdown synthesis)
+Writer (Markdown synthesis with images)
   ↓
 HITL — "Save to knowledge base?"
   ├── YES → Retriever (Chroma embed + store) → END
@@ -56,6 +62,12 @@ agentic-deep-research/
 │   │   ├── prompts.py      → LangSmith Hub prompt retrieval
 │   │   └── vectorstore.py  → Chroma singleton initialization
 │   └── agent.py            → StateGraph compilation + entry point
+├── tests/                  → pytest unit tests
+├── .github/
+│   └── workflows/
+│       └── ci.yml          → GitHub Actions (pytest + ruff)
+├── Dockerfile
+├── docker-compose.yml
 ├── langgraph.json
 ├── pyproject.toml
 └── .env
@@ -64,11 +76,12 @@ agentic-deep-research/
 ## Stack
 
 - **Orchestration**: LangGraph StateGraph
-- **LLM**: GPT-5.2 Thinking
-- **Search**: Tavily (search + extract)
-- **Memory**: Chroma (semantic cache via HITL)
-- **Observability**: LangSmith
+- **LLM**: Mercury 2 (Inception Labs) — 1,009 tokens/s, 1.7s end-to-end latency
+- **Search**: Tavily (search + extract + images)
+- **Memory**: Chroma (semantic cache via HITL) + PostgreSQL (session persistence)
+- **Observability**: LangSmith (traces, PromptOps, session metrics)
 - **Interface**: Agent Chat UI
+- **Infrastructure**: Docker, GitHub Actions CI
 
 ## Setup
 
@@ -78,10 +91,28 @@ uv sync
 
 # Configure environment
 cp .env.example .env
-# Add your API keys to .env
+# Add your API keys:
+# INCEPTION_API_KEY
+# TAVILY_API_KEY
+# LANGSMITH_API_KEY
+# POSTGRES_URI
 
-# Run LangGraph server
+# Run with Docker
+docker compose up
+
+# Or run locally
 langgraph dev
 ```
 
 Then open [Agent Chat UI](https://github.com/langchain-ai/agent-chat-ui) and point it to `http://localhost:2024`.
+
+## Observability
+
+All runs are traced in LangSmith with per-session metadata:
+
+```
+├── Tokens consumed per research session
+├── Latency per node
+├── Cache hit / miss rate
+└── Estimated cost per run
+```
