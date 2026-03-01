@@ -6,7 +6,8 @@ vector_store_upsert: Chroma knowledge base document upsertion.
 vector_store_retrieval: Chroma knowledge base document retrieval.
 """
 
-import logging  
+import logging 
+from typing import List
 from dotenv import load_dotenv
 from tavily import TavilyClient
 from langchain_core.tools import tool
@@ -60,11 +61,11 @@ def tavily_search(query: str, topic: str) -> list[dict]:
     wait=wait_exponential(multiplier=1, min=2, max=10),
     retry=retry_if_exception_type((httpx.NetworkError, httpx.TimeoutException, ConnectionError))
 )
-def tavily_extract(urls: list[str] | str) -> list[dict]:
+def tavily_extract(urls: List[str]) -> list[dict]:
     """Extract full content from the given url in Markdown format.
 
     Args:
-        urls (list[str] | str): URLs to extract content from.
+        urls (list[str]): URLs to extract content from.
 
     Returns:
         list[dict]: List of extracted results with url, raw_content and images
