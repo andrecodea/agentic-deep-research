@@ -17,15 +17,13 @@ log = logging.getLogger(__name__)
 
 # Prompt pulling
 ORCHESTRATOR_PROMPT = get_prompt("deep-research-orchestrator:latest")
-ROUTER_PROMPT = get_prompt("deep-research-router:latest")
-RETRIEVER_PROMPT = get_prompt("deep-research-retriever:latest")
 RESEARCHER_PROMPT = get_prompt("deep-research-researcher:latest")
 WRITER_PROMPT = get_prompt("deep-research-writer:latest")
 
 # Global llm
 llm = ChatOpenAI(
     model="mercury-2",
-    temperature=0.5,
+    temperature=0.0,
     base_url="https://api.inceptionlabs.ai/v1"
 )
 
