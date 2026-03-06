@@ -79,14 +79,102 @@ def router(state: ResearchState) -> dict:
     log.info("Router: research intent, defaulting to new")
     return {"research_mode": "new"}
 
-# TODO
 def retriever(state: ResearchState) -> dict:
-    ...
+    """Retrieves documents from a ChromaDB vectorstore through similarity search.
+    
+    Args:
+        state (ResearchState): Current graph state.
+            query (ResearchState.query): User query for retrieval.
+    
+    Returns:
+        dict: Retrieved documents and cache hit status.
+    """
+    log.info(f"Retriever executing: query={state.get('query')}")
+    query = state.get("query", "")
 
-# TODO
+    try:
+        results = vector_store_retrieval(query)
+
+        if not results:
+            log.info("Retriever: no documents found.")
+            return {"retrieved_docs": [], "cache_hit": False}
+        
+        best_score = results[0][1] # list[tuple[Document, float]] e.g. [(doc, simmilarity score)]
+        cache_hit = best_score < 0.3 # True if best score above 0.3
+        retrieved_docs = [doc for doc, _ in results]
+        
+        log.info(f"Retriever: score={best_score:.3f}, cache_hit={cache_hit}")
+        return {"retrieved_docs": retrieved_docs, "cache_hit": cache_hit}
+    except Exception as e:
+        log.error(f"Retriever failed: {e}", exc_info=True)
+        raise
+        
+
 def researcher(state: ResearchState) -> dict:
-    ...
+    """Conduct web search and page content extraction via Tavily.
 
+    Workflow:
+        1. Gets query from state
+        2. Searches the web with the given query
+        3. Extracts content from the web pages of the searches based in their URLs
+
+    Args:
+        state (ResearchState): Current graph state.
+            query (ResearchState.query): A user's search query.
+    
+    Returns
+        dict: Search results
+    """
+    log.info(f"Researcher executing: query={state.get('query')}")
+    try:
+        query = state.get("query", "")
+
+        search_results = tavily_search(query)
+
+        if not search_results:
+            log.warning(f"Researcher: no results found for '{query}'")
+            return {"search_results": []}
+
+        log.info(f"Researcher: {len(search_results)} results found.")
+
+        urls = [result["url"] for result in search_results]
+        extracted = tavily_extract(urls)
+
+        if not extracted:
+            log.warning(f"Researcher: extraction of {urls} returned no content.")
+            return {"search_results": []}
+
+        log.info(f"Researcher: {len(extracted)} pages extracted.")
+        return {"search_results": {extracted}}
+    except Exception as e:
+        log.error(f"Researcher failed {e}", exc_info=True)
+        raise
+
+def upserter(state: ResearchState) -> dict:
+    """Upserts documents into a ChromaDB vectorstore.
+    
+    Args:
+        state (ResearchState): Current graph state.
+            search_results (ResearchState.search_results): Extracted web content
+    Returns:
+        dict: Empty - state unchanged.
+    """
+    log.info(f"Upserter executing: search_results={state.get('search_results')}")
+    
+    try:
+        search_results = state.get("search_results", [])
+
+        if not search_results:
+            log.info("Retriever: no search results to persist.")
+            return {}
+        
+        vector_store_upsert(search_results)
+        log.info(f"Upserter: {len(search_results)} documents upserted")
+        return {}
+    except Exception as e:
+        log.error(f"Upserter failed: {e}", exc_info=True)
+        raise
+        
 #TODO
 def writer(state: ResearchState) -> dict:
     ...
