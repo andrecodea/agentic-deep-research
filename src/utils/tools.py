@@ -22,7 +22,6 @@ log = logging.getLogger(__name__)
 
 tavily_client = TavilyClient()
 
-@tool
 @retry(
     stop=stop_after_attempt(3), # 3 attempts
     wait=wait_exponential(multiplier=1, min=2, max=10), # wait 2s before 2nd attempt, wait 4s before 3rd attempt, raise after 3rd failures
@@ -54,8 +53,6 @@ def tavily_search(query: str, topic: str) -> list[dict]:
         log.error(f"Error searching the web: {e}", exc_info=True)
         raise
 
-# TODO: TEST
-@tool
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -84,8 +81,6 @@ def tavily_extract(urls: List[str]) -> list[dict]:
         log.error(f"Error extracting data from pages: {e}", exc_info=True)
         raise
 
-# TODO: REVIEW -> TEST
-@tool
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -116,8 +111,6 @@ def vector_store_upsert(results: list[dict]) -> str:
         log.error(f"Failed to upsert documents {e}", exc_info=True)
         raise
 
-# TODO: REVIEW -> TEST
-@tool
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
