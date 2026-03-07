@@ -3,7 +3,7 @@
         "."
     ],
     "graphs": {
-        "deep_research": "./src/agent.py:graph"
+        "deep_research": "./src/agent.py:build_graph"
     },
-    "env": "./.env"
+    "env": ["./.env", "PYTHONPATH=src"]
 }
