@@ -98,13 +98,3 @@ Then open [LangGraph Studio](https://smith.langchain.com/studio) and point it to
 pytest           # Run all tests
 pytest -v        # Verbose
 ```
-
-## Code Grade
-
-**73/100** — Mid-level developer level
-
-- Good state design and error handling
-- Proper retry logic with tenacity
-- Clean graph architecture
-- Minor LSP warnings to address
-- No test coverage yet
