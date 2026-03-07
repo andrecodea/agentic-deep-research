@@ -1,6 +1,6 @@
 # Deep Research Agent
 
-Enterprise-grade multi-agent research pipeline orchestrated with LangGraph. Features semantic memory via Chroma with Human-in-the-Loop (HITL) curation, session persistence via PostgreSQL, and full observability via LangSmith.
+Multi-step graph research pipeline orchestrated with LangGraph. Features semantic memory via Chroma with Human-in-the-Loop (HITL) curation, session persistence via PostgreSQL, and full observability via LangSmith.
 
 > Inference powered by Mercury 2 (Inception Labs) — a state-of-the-art diffusion LLM.
 
