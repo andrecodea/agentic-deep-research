@@ -1,6 +1,6 @@
 # Deep Research Agent
 
-Multi-step graph research pipeline orchestrated with LangGraph. Features semantic memory via Chroma with Human-in-the-Loop (HITL) curation, session persistence via PostgreSQL, and full observability via LangSmith.
+Multi-step graph research pipeline with Chainlit chat UI, orchestrated with LangGraph. Features semantic memory via Chroma with Human-in-the-Loop (HITL) curation, session persistence via PostgreSQL, and full observability via LangSmith.
 
 > Inference powered by Mercury 2 (Inception Labs) — a state-of-the-art diffusion LLM.
 
@@ -9,9 +9,9 @@ Multi-step graph research pipeline orchestrated with LangGraph. Features semanti
 ## Architecture
 
 ```
-START
+User Message (Chainlit)
   ↓
-Orchestrator — Classifies intent via LLM
+START → Orchestrator — Classifies intent via LLM
   ↓
 Router — Routes to retriever, researcher, or writer based on intent
   ↓
@@ -24,11 +24,9 @@ Router — Routes to retriever, researcher, or writer based on intent
 │    └── Writer                               │
 └─────────────────────────────────────────────┘
   ↓
-Writer — Generates Markdown report via LLM
+Writer — Generates Markdown report via LLM (with HITL middleware)
   ↓
-HITL — Human approval to save to Chroma
-  ├── ACCEPT → Upserter → END
-  └── IGNORE → END
+END → Response streamed to Chainlit UI
 ```
 
 ### State
@@ -39,8 +37,9 @@ HITL — Human approval to save to Chroma
 | `intent` | `Literal` | "conversation", "simple_search", "quick_search", "deep_research" |
 | `research_mode` | `Literal` | "new", "existing", "quick" |
 | `query` | `str` | Research query from user |
+| `topic` | `str` | Search topic context ("general", "news", "finance") |
 | `retrieved_docs` | `list[Document]` | Chroma results (add_docs reducer) |
-| `cache_hit` | `bool` | Whether Chroma returned relevant context |
+| `cache_hit` | `bool` | Whether Chroma returned relevant context (< 0.3 score) |
 | `search_results` | `list[dict]` | Tavily results (add_docs reducer) |
 | `final_report` | `str` | Generated report |
 | `save_to_chroma` | `bool` | HITL decision flag |
@@ -50,21 +49,24 @@ HITL — Human approval to save to Chroma
 ```
 deep_research_agent/
 ├── src/
-│   ├── agent.py              → StateGraph compilation
+│   ├── main.py              → Chainlit entry point (chat UI)
+│   ├── graph.py             → StateGraph compilation
 │   └── utils/
-│       ├── state.py          → ResearchState (shared state + reducers)
-│       ├── nodes.py          → orchestrator, router, retriever, researcher, writer, hitl, upserter
-│       ├── tools.py          → Tavily search/extract, Chroma query/save
-│       ├── prompts.py        → LangSmith Hub prompt retrieval
-│       └── vectorstore.py    → Chroma singleton
-├── tests/                    → pytest unit tests
-├── langgraph.json            → LangGraph configuration
-├── pyproject.toml            → Dependencies (uv)
-└── .env                      → Environment variables
+│       ├── state.py         → ResearchState (shared state + reducers)
+│       ├── nodes.py         → orchestrator, retriever, researcher, writer
+│       ├── tools.py         → Tavily search/extract, Chroma query/save
+│       ├── prompts.py       → LangSmith Hub prompt retrieval
+│       └── vectorstore.py   → Chroma singleton
+├── tests/                   → pytest unit tests
+├── chainlit.md              → Chainlit welcome screen
+├── langgraph.json           → LangGraph CLI configuration
+├── pyproject.toml           → Dependencies (uv)
+└── .env                     → Environment variables
 ```
 
 ## Stack
 
+- **UI**: Chainlit (chat interface with streaming + auth)
 - **Orchestration**: LangGraph (StateGraph)
 - **LLM**: Mercury 2 (Inception Labs)
 - **Search**: Tavily (search + extract)
@@ -78,19 +80,24 @@ deep_research_agent/
 uv sync
 
 # Configure environment (.env)
-INCEPTION_API_KEY=your_key
-TAVILY_API_KEY=your_key
-LANGSMITH_API_KEY=your_key
-DATABASE_URL=postgresql://user:pass@localhost:5432/db
+INCEPTION_API_KEY=your_key          # Mercury 2 LLM
+TAVILY_API_KEY=your_key             # Web search
+LANGSMITH_API_KEY=your_key          # Observability
+LANGGRAPH_DATABASE_URL=postgresql://user:pass@localhost:5432/db  # Session persistence
+ADMIN_USER=your_admin_user          # Chainlit auth
+ADMIN_PASS=your_admin_pass          # Chainlit auth
+CHAINLIT_AUTH_SECRET=your_secret    # Chainlit session encryption
 
-# Run locally
+# Run with Chainlit (recommended)
+chainlit run src/main.py
+
+# Or run with LangGraph CLI
 langgraph dev
-
-# Or with Docker
-docker compose up
 ```
 
-Then open [LangGraph Studio](https://smith.langchain.com/studio) and point it to `http://127.0.0.1:2024`.
+Then open:
+- **Chainlit**: http://localhost:8000 (with auth)
+- **LangGraph Studio**: https://smith.langchain.com/studio → point to `http://127.0.0.1:2024`
 
 ## Running Tests
 
@@ -98,3 +105,15 @@ Then open [LangGraph Studio](https://smith.langchain.com/studio) and point it to
 pytest           # Run all tests
 pytest -v        # Verbose
 ```
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `INCEPTION_API_KEY` | Yes | Mercury 2 API key from Inception Labs |
+| `TAVILY_API_KEY` | Yes | Tavily API key for web search |
+| `LANGSMITH_API_KEY` | No | LangSmith for observability/tracing |
+| `LANGGRAPH_DATABASE_URL` | Yes | PostgreSQL connection for session persistence |
+| `ADMIN_USER` | Yes | Chainlit admin username |
+| `ADMIN_PASS` | Yes | Chainlit admin password |
+| `CHAINLIT_AUTH_SECRET` | Yes | Secret for Chainlit session encryption |
