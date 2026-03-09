@@ -34,3 +34,7 @@ chroma_db/
 
 .langgraph_api/
 .ruff_cache/
+
+.files/
+.chainlit/
+chainlit.md
