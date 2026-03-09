@@ -81,6 +81,8 @@ def tavily_extract(urls: List[str]) -> list[dict]:
         log.error(f"Error extracting data from pages: {e}", exc_info=True)
         raise
 
+    
+@tool
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
