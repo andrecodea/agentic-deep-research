@@ -15,9 +15,22 @@ DB_URL = os.environ["LANGGRAPH_DATABASE_URL"]
 app_graph = None
 db_pool = None
 
+@cl.password_auth_callback
+async def auth_callback(username: str, password: str):
+    if (username == os.getenv("ADMIN_USER") and 
+        password == os.getenv("ADMIN_PASS")):
+        return cl.User(identifier=username)
+    return None
+
 @cl.on_chat_start
 async def on_chat_start():
     """Asyncronously starts Chainlit app with graph and DB setup as global variables"""
+    
+    # Auth
+    user = cl.user_session.get("user")
+    user_thread = f"{user.identifier}_research_session"
+    cl.user_session.set("thread_id", user_thread)
+
     # Shared throughout the app
     global app_graph, db_pool
 
@@ -39,7 +52,7 @@ async def on_chat_start():
     # Saves unique thread id for user
     cl.user_session.set("thread_id", cl.context.session.id)
 
-    await cl.Message(content="Olá! O que quer pesquisar hoje?").send()
+    await cl.Message(content=f"Olá {user.identifier}! O que quer pesquisar hoje?").send()
 
 @cl.on_message
 async def main(message: cl.Message):
@@ -96,13 +109,14 @@ async def main(message: cl.Message):
 
             # If it's just a simple message
             else:
-                last_msg = state.values["messages"][-1].content
-                msg.content = last_msg
+                messages = state.values.get("messages", [])
+                if messages and messages[-1].type == "ai":
+                    msg.content = messages["messages"][-1].content
                 await msg.send()
 
         # If streaming worked, notify chainlit
         else:
-            await msg.update()
+            await cl.Message(content="Estou processando sua solicitação, um momento...").send()
     except Exception as e:
         error_msg = f"Ocorreu um erro durante a pesquisa: {str(e)}"
         
